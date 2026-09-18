@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     environment:
-      DB_HOST: db
+      DB_HOST: ${DB_HOST:-db}
       NOTIFICATIONS_URL: http://notifications:5001
       REQUIRE_NOTIFICATIONS: "true"
     ports:
