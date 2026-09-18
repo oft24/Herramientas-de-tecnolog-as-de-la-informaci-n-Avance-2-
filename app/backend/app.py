@@ -1958,9 +1958,14 @@ def add_response_headers(response):
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
     forwarded_proto = request.headers.get("X-Forwarded-Proto", "").split(",", 1)[0].strip()
-    if request.is_secure or forwarded_proto == "https":
+    is_https = request.is_secure or forwarded_proto == "https"
+    if is_https:
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     if response.mimetype == "text/html":
+        # upgrade-insecure-requests only makes sense when already on HTTPS;
+        # on plain HTTP it causes the browser to upgrade sub-resource requests
+        # to HTTPS, which fails and breaks all CSS/JS/image loading.
+        csp_upgrade = "upgrade-insecure-requests; " if is_https else ""
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "base-uri 'none'; "
@@ -1974,7 +1979,7 @@ def add_response_headers(response):
             "object-src 'none'; "
             "script-src 'self'; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-            "upgrade-insecure-requests; "
+            + csp_upgrade +
             "worker-src 'self'"
         )
         response.headers["Accept-CH"] = "Sec-CH-UA-Mobile"
