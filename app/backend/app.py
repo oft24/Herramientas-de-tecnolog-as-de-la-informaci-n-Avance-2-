@@ -1573,6 +1573,13 @@ def current_catalog() -> list[dict]:
         if pack:
             apply_pack(product, *pack)
             product["case"] = product["pack_label"]
+        # Ensure the product always has an 'id' field (required by checkout)
+        if "id" not in product:
+            product["id"] = str(product["sku"])
+        # Ensure price and is_available are always present
+        if "price" not in product:
+            product["price"] = 0.01
+        product.setdefault("is_available", not str(product.get("status", "")).startswith("Agotado"))
         apply_intl_names(product)
         catalog.append(product)
     return catalog
