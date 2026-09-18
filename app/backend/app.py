@@ -59,7 +59,10 @@ app.config.update(
     MAX_CONTENT_LENGTH=16 * 1024,
     MAX_FORM_MEMORY_SIZE=16 * 1024,
     MAX_FORM_PARTS=50,
-    PREFERRED_URL_SCHEME="https",
+    # AWS Academy exposes this container directly over HTTP on port 5000.
+    # Keep HTTPS as the secure default but allow the deployment to select its
+    # actual frontend scheme through the environment.
+    PREFERRED_URL_SCHEME=os.getenv("PREFERRED_URL_SCHEME", "https"),
     TRUSTED_HOSTS=TRUSTED_HOSTS,
 )
 
