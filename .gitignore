@@ -5,6 +5,8 @@
 *.pem
 *.tfstate
 *.tfstate.*
+*.tfvars
+*.tfvars.json
 .terraform/
 venv/
 .venv/
