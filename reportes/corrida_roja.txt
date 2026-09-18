@@ -1,0 +1,22 @@
+SBOM CycloneDX generado: reportes\sbom_cyclonedx.json (10 componentes)
+PIPELINE DANGOKO AVANCE 2
+Umbral integrado: cero hallazgos HIGH/CRITICAL y pruebas de sintaxis correctas
+
+[ETAPA] Pruebas de sintaxis
+  [OK] Sin hallazgos sobre el umbral definido
+Demo roja: se inspecciona un candidato real en malicious.env
+
+[ETAPA] Higiene de secretos
+  [HALLAZGO] malicious.env:1: asignaci�n de secreto
+  [BLOQUEA] Higiene de secretos: umbral incumplido
+
+[ETAPA] Infraestructura como c�digo
+  [OK] Sin hallazgos sobre el umbral definido
+
+[ETAPA] Docker endurecido
+  [OK] Sin hallazgos sobre el umbral definido
+
+[ETAPA] SBOM CycloneDX
+  [OK] Sin hallazgos sobre el umbral definido
+
+DECISI�N FINAL: BLOQUEADO
