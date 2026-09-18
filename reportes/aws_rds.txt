@@ -1,0 +1,10 @@
+-------------------------------------------------------------------------------
+|                             DescribeDBInstances                             |
++-----------+-----------------------------------------------------------------+
+|  Encrypted|  True                                                           |
+|  Endpoint |  dangoko-avance2-rds.c8afxe8qtc3e.us-west-2.rds.amazonaws.com   |
+|  Engine   |  postgres                                                       |
+|  Public   |  False                                                          |
+|  Status   |  available                                                      |
+|  Version  |  16.15                                                          |
++-----------+-----------------------------------------------------------------+

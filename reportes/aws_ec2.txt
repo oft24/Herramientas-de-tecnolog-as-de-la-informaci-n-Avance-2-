@@ -1,0 +1,6 @@
+Instance: i-086d08e1bca370b0f
+Name: dangoko-avance2-linux
+Public IP: 44.251.176.246
+Region: us-west-2
+AZ: us-west-2b
+Commit: a0cde5e

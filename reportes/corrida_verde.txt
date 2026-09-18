@@ -1,4 +1,4 @@
-SBOM CycloneDX generado: reportes\sbom_cyclonedx.json (10 componentes)
+SBOM CycloneDX generado: reportes/sbom_cyclonedx.json (10 componentes)
 PIPELINE DANGOKO AVANCE 2
 Umbral integrado: cero hallazgos HIGH/CRITICAL y pruebas de sintaxis correctas
 
@@ -8,7 +8,7 @@ Umbral integrado: cero hallazgos HIGH/CRITICAL y pruebas de sintaxis correctas
 [ETAPA] Higiene de secretos
   [OK] Sin hallazgos sobre el umbral definido
 
-[ETAPA] Infraestructura como c�digo
+[ETAPA] Infraestructura como código
   [OK] Sin hallazgos sobre el umbral definido
 
 [ETAPA] Docker endurecido
@@ -17,4 +17,4 @@ Umbral integrado: cero hallazgos HIGH/CRITICAL y pruebas de sintaxis correctas
 [ETAPA] SBOM CycloneDX
   [OK] Sin hallazgos sobre el umbral definido
 
-DECISI�N FINAL: PERMITIDO
+DECISIÓN FINAL: PERMITIDO
