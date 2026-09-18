@@ -580,5 +580,55 @@ class ShowroomTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
 
+class DatabaseCreateOrderTests(unittest.TestCase):
+    """Verify that create_order uses cursor.executemany (psycopg3 compatible)."""
+
+    def test_create_order_uses_cursor_executemany(self):
+        """
+        conn.executemany does not exist in psycopg3.
+        create_order must use conn.cursor().executemany instead.
+        This test mocks the connection and verifies the correct path is taken.
+        """
+        from unittest.mock import MagicMock, patch, call
+        from backend import database
+
+        mock_cursor = MagicMock()
+        mock_conn = MagicMock()
+        # Make cursor() return a context-manager that yields mock_cursor
+        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+        # Remove executemany from conn to ensure it is NOT called on the connection
+        del mock_conn.executemany
+
+        mock_ctx = MagicMock()
+        mock_ctx.__enter__ = MagicMock(return_value=mock_conn)
+        mock_ctx.__exit__ = MagicMock(return_value=False)
+
+        with patch("backend.database.connection", return_value=mock_ctx):
+            database.create_order(
+                order_id="test-uuid-001",
+                user_id=1,
+                customer_name="Test",
+                customer_email="test@example.com",
+                subtotal="1120.00",
+                shipping="0.00",
+                total="1120.00",
+                items=[
+                    {"product_id": "811140", "quantity": 1, "unit_price": "1120.00"}
+                ],
+                s3_key="orders/test.json",
+            )
+
+        # The order header must be inserted via conn.execute
+        mock_conn.execute.assert_called_once()
+
+        # The order items must be inserted via cursor.executemany, NOT conn.executemany
+        mock_cursor.executemany.assert_called_once()
+        args = mock_cursor.executemany.call_args[0]
+        self.assertIn("order_items", args[0])
+        self.assertEqual(args[1][0][0], "test-uuid-001")  # order_id
+        self.assertEqual(args[1][0][1], "811140")          # product_id
+
+
 if __name__ == "__main__":
     unittest.main()

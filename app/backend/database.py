@@ -117,6 +117,7 @@ def create_order(
     s3_key: str | None,
 ) -> None:
     with connection() as conn:
+        # Insert the order header
         conn.execute(
             """
             INSERT INTO orders (
@@ -124,18 +125,24 @@ def create_order(
                 shipping, total, status, s3_key
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, 'created', %s)
             """,
-            (order_id, user_id, customer_name, customer_email, subtotal, shipping, total, s3_key),
+            (order_id, user_id, customer_name, customer_email,
+             subtotal, shipping, total, s3_key),
         )
-        conn.executemany(
-            """
-            INSERT INTO order_items (order_id, product_id, quantity, unit_price)
-            VALUES (%s, %s, %s, %s)
-            """,
-            [
-                (order_id, item["product_id"], item["quantity"], item["unit_price"])
-                for item in items
-            ],
-        )
+        # Insert order items using an explicit cursor (psycopg3: executemany
+        # lives on the cursor, not directly on the connection object).
+        if items:
+            with conn.cursor() as cur:
+                cur.executemany(
+                    """
+                    INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    [
+                        (order_id, item["product_id"],
+                         item["quantity"], item["unit_price"])
+                        for item in items
+                    ],
+                )
 
 
 def serialize_order(order: dict, items: list[dict]) -> str:
