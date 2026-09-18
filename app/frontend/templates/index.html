@@ -23,9 +23,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="/js/device.js?v=1"></script>
-    <link rel="stylesheet" href="/css/style.css?v=42">
+    <link rel="stylesheet" href="/css/style.css?v=43">
     <script defer src="/js/i18n.js?v=20"></script>
-    <script defer src="/js/app.js?v=46"></script>
+    <script defer src="/js/app.js?v=47"></script>
   </head>
   <body>
     <a class="skip-link" href="#main" data-i18n="skip">Saltar al contenido</a>
@@ -64,6 +64,9 @@
             <option value="zh">中文</option>
           </select>
         </label>
+        <button class="pill pill--soft account-button" type="button" data-open-auth>
+          <span data-auth-label>Entrar / Registrarse</span>
+        </button>
         <button class="pill pill--dark cart-button" type="button" data-open-cart data-cart-trigger>
           <span data-i18n="header.cart">Carrito</span> <span class="cart-count" data-cart-count>0</span>
         </button>
@@ -547,7 +550,7 @@
       </div>
       <div class="footer-links">
         <div><span data-i18n="footer.explore">Explorar</span><a href="#catalog" data-i18n="nav.catalog" data-view-toggle="shop">Catálogo</a><a href="#story" data-i18n="nav.info" data-view-toggle="shop">Información</a><a href="#ritual" data-i18n="nav.preparation" data-view-toggle="shop">Preparación</a><a href="#refrescos" data-i18n="nav.refrescos" data-view-toggle="refrescos">Refrescos</a></div>
-        <div><span data-i18n="footer.buy">Comprar</span><a href="#catalog" data-i18n="footer.products" data-view-toggle="shop">Todos los productos</a><a href="#prepared" data-i18n="footer.looks" data-view-toggle="shop">Cómo queda</a><button type="button" data-open-cart data-i18n="footer.cart">Tu carrito</button><a href="https://wa.me/5215529723373" target="_blank" rel="noopener noreferrer" data-i18n="footer.contact">Contacto: +52 55 2972 3373</a></div>
+        <div><span data-i18n="footer.buy">Comprar</span><a href="#catalog" data-i18n="footer.products" data-view-toggle="shop">Todos los productos</a><a href="#prepared" data-i18n="footer.looks" data-view-toggle="shop">Cómo queda</a><button type="button" data-open-cart data-i18n="footer.cart">Tu carrito</button><span class="footer-contact" data-i18n="footer.contact">Contacto disponible próximamente</span></div>
         <div><span data-i18n="footer.legal">Legal</span><a href="/terminos" data-i18n="footer.terms">Términos y condiciones</a><a href="/privacidad" data-i18n="footer.privacy">Aviso de privacidad</a><a href="/devoluciones" data-i18n="footer.returns">Cambios y devoluciones</a><a href="/cookies" data-i18n="footer.cookies">Cookies y almacenamiento</a></div>
       </div>
       <p class="disclaimer" data-i18n="footer.disclaimer">dangoko es un concepto independiente y no está afiliado, patrocinado ni respaldado por Samyang Foods o la marca Buldak.</p>
@@ -565,6 +568,32 @@
         <div class="search-suggestions"><span data-i18n="search.try">Prueba</span><button type="button" data-suggestion="carbonara">carbonara</button><button type="button" data-suggestion="spicy">spicy</button><button type="button" data-suggestion="cheese">cheese</button></div>
         <div class="search-results" data-search-results></div>
         <p class="no-results" data-no-results data-i18n="search.noResults" hidden>Ningún sabor coincide. Prueba “carbonara”, “picante” o “queso”.</p>
+      </div>
+    </dialog>
+
+    <dialog class="auth-dialog" data-auth-dialog aria-labelledby="auth-title">
+      <button class="checkout-close" type="button" data-close-auth aria-label="Cerrar cuenta">×</button>
+      <div class="auth-dialog__intro">
+        <span class="section-index">dangoko / cuenta</span>
+        <h2 id="auth-title" data-auth-title>Inicia sesión.</h2>
+        <p data-auth-copy>Guarda tus pedidos en tu cuenta y consulta el catálogo desde cualquier dispositivo.</p>
+      </div>
+      <div class="auth-tabs" role="tablist" aria-label="Cuenta">
+        <button type="button" class="auth-tab is-active" data-auth-mode="login" role="tab" aria-selected="true">Iniciar sesión</button>
+        <button type="button" class="auth-tab" data-auth-mode="register" role="tab" aria-selected="false">Crear cuenta</button>
+      </div>
+      <form class="auth-form" data-auth-form>
+        <label data-auth-name-field hidden><span>Nombre completo</span><input name="name" autocomplete="name" maxlength="80"></label>
+        <label><span>Correo electrónico</span><input name="email" type="email" autocomplete="email" required maxlength="160"></label>
+        <label><span>Contraseña</span><input name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128"></label>
+        <button class="checkout-button" type="submit"><span data-auth-submit>Entrar</span> <span>→</span></button>
+        <p class="form-error" data-auth-error role="alert"></p>
+      </form>
+      <div class="auth-session" data-auth-session hidden>
+        <span class="success-mark">✓</span>
+        <h3 data-auth-session-title>Sesión iniciada</h3>
+        <p data-auth-session-copy></p>
+        <button class="checkout-secondary" type="button" data-auth-logout>Cerrar sesión</button>
       </div>
     </dialog>
 
@@ -587,29 +616,28 @@
       <div class="cart-footer">
         <div><span data-i18n="cart.subtotal">Subtotal</span><strong data-subtotal>$0.00</strong></div>
         <p data-shipping-message>Envío por cotizar.</p>
-        <button class="checkout-button" type="button" data-open-checkout data-i18n="cart.checkout" disabled>Cotizar por WhatsApp</button>
+        <button class="checkout-button" type="button" data-open-checkout data-i18n="cart.checkout" disabled>Crear pedido</button>
       </div>
     </aside>
 
     <dialog class="checkout-dialog" data-checkout-dialog aria-labelledby="checkout-title">
       <button class="checkout-close" type="button" data-close-checkout aria-label="Cerrar pedido" data-i18n-aria="checkout.close">×</button>
       <div data-checkout-form-view>
-        <span class="section-index" data-i18n="checkout.index">Cotización por WhatsApp</span>
+        <span class="section-index" data-i18n="checkout.index">Confirmación de pedido</span>
         <h2 id="checkout-title" data-i18n="checkout.title">Confirma tu carrito.</h2>
-        <p data-i18n="checkout.copy">Prepararemos un mensaje con tus productos, cantidades y precios. Podrás revisarlo antes de enviarlo por WhatsApp.</p>
+        <p data-i18n="checkout.copy">Primero guardaremos tu pedido en la base de datos. Después verás su confirmación.</p>
         <form data-checkout-form>
           <label><span data-i18n="checkout.name">Nombre completo</span><input name="name" autocomplete="name" required maxlength="80"></label>
           <label class="consent-check"><input name="privacy_consent" type="checkbox" required><span><span data-i18n="checkout.consent">He leído y acepto el</span> <a href="/privacidad" target="_blank" rel="noopener noreferrer" data-i18n="checkout.privacy">aviso de privacidad</a>.</span></label>
-          <button class="checkout-button" type="submit"><span data-checkout-submit-label data-i18n="checkout.submit">Continuar a WhatsApp</span> <span>→</span></button>
+          <button class="checkout-button" type="submit"><span data-checkout-submit-label data-i18n="checkout.submit">Crear pedido</span> <span>→</span></button>
           <p class="form-error" data-checkout-error role="alert"></p>
         </form>
       </div>
       <div class="checkout-success" data-checkout-success hidden>
         <span class="success-mark">✓</span>
-        <span class="section-index" data-i18n="checkout.successIndex">Cotización preparada</span>
-        <h2 data-i18n="checkout.successTitle">Tu mensaje está listo.</h2>
-        <p data-checkout-success-copy>Cotización preparada.</p>
-        <a class="checkout-button checkout-whatsapp" href="#" target="_blank" rel="noopener noreferrer" data-whatsapp-quote hidden><span data-i18n="checkout.openWhatsApp">Abrir WhatsApp</span> <span>↗</span></a>
+        <span class="section-index" data-i18n="checkout.successIndex">Pedido guardado</span>
+        <h2 data-i18n="checkout.successTitle">Pedido confirmado.</h2>
+        <p data-checkout-success-copy>Tu pedido se guardó correctamente.</p>
         <button class="checkout-secondary" type="button" data-finish-checkout data-i18n="checkout.continue">Seguir explorando</button>
       </div>
     </dialog>

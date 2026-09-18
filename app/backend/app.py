@@ -1878,6 +1878,9 @@ def checkout():
     shipping = Decimal("0")
     order_id = f"BDK-{token_hex(5).upper()}"
     authenticated_user = _current_user()
+    customer_email = str(customer.get("email", "")).strip() or (
+        authenticated_user["email"] if authenticated_user else None
+    )
     order_uuid = str(uuid4())
     order_items = [
         {
@@ -1891,7 +1894,7 @@ def checkout():
         "id": order_uuid,
         "public_order_id": order_id,
         "customer_name": name,
-        "customer_email": str(customer.get("email", "")).strip() or None,
+        "customer_email": customer_email,
         "subtotal": f"{total:.2f}",
         "shipping": f"{shipping:.2f}",
         "total": f"{total + shipping:.2f}",
@@ -1917,8 +1920,9 @@ def checkout():
             s3_key,
         )
     except Exception as error:
-        if REQUIRE_RDS:
-            return jsonify(error="No se pudo guardar el pedido en RDS.", detail=type(error).__name__), 503
+        # Never notify or present a successful checkout when the durable order
+        # record was not created. Notifications are downstream of RDS.
+        return jsonify(error="No se pudo guardar el pedido en RDS.", detail=type(error).__name__), 503
     notification_status = "fallback"
     try:
         notification = requests.post(

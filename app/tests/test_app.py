@@ -12,6 +12,11 @@ from backend.supabase_repository import ProductRepository
 class ShowroomTests(unittest.TestCase):
     def setUp(self):
         self.client = app.test_client()
+        self.db_init = patch("backend.app.database.init_schema").start()
+        self.db_create_order = patch("backend.app.database.create_order").start()
+        self.notification_post = patch("backend.app.requests.post").start()
+        self.notification_post.return_value.json.return_value = {"status": "sent"}
+        self.addCleanup(patch.stopall)
 
     def test_homepage_renders(self):
         response = self.client.get("/")
@@ -30,10 +35,10 @@ class ShowroomTests(unittest.TestCase):
         self.assertNotIn(b"Referencia visual", response.data)
         self.assertNotIn(b"Referencia ", response.data)
         self.assertIn(b'data-language', response.data)
-        self.assertIn(b'css/style.css?v=42', response.data)
+        self.assertIn(b'css/style.css?v=43', response.data)
         self.assertIn(b'js/device.js?v=1', response.data)
         self.assertIn(b'js/i18n.js?v=20', response.data)
-        self.assertIn(b'js/app.js?v=46', response.data)
+        self.assertIn(b'js/app.js?v=47', response.data)
         self.assertIn(b'/assets/mobile-catalog/811140.webp?v=1', response.data)
         self.assertIn(b'data-carousel-srcset="/assets/mobile-catalog/', response.data)
         self.assertIn(b'data-server-device="desktop"', response.data)
@@ -82,8 +87,9 @@ class ShowroomTests(unittest.TestCase):
         self.assertLess(response.data.index(b'data-card-product="811140"'), response.data.index(b'data-card-product="811150"'))
         self.assertLess(response.data.index(b'data-card-product="811650"'), response.data.index(b'data-card-product="811910"'))
         self.assertIn(b'data-clear-cart', response.data)
-        self.assertIn(b'data-whatsapp-quote', response.data)
-        self.assertIn(b'Cotizar por WhatsApp', response.data)
+        self.assertIn(b'data-auth-dialog', response.data)
+        self.assertIn(b'data-auth-form', response.data)
+        self.assertIn(b'Crear pedido', response.data)
         self.assertIn(b'data-story-section', response.data)
         self.assertIn(b'data-story-sweetness-stat', response.data)
         self.assertIn(b'data-story-kcal-basis', response.data)
@@ -93,7 +99,7 @@ class ShowroomTests(unittest.TestCase):
         self.assertIn(b'href="/devoluciones"', response.data)
         self.assertIn(b'href="/cookies"', response.data)
         self.assertIn(b'name="privacy_consent"', response.data)
-        self.assertNotIn(b'name="email"', response.data)
+        self.assertIn(b'name="email"', response.data)
         self.assertIn(b"prepared-carbonara.jpg?v=3", response.data)
         favicon = self.client.get("/assets/favicon.svg")
         try:
@@ -123,7 +129,7 @@ class ShowroomTests(unittest.TestCase):
                 self.assertIn(title, response.data)
                 self.assertIn(b'href="#policy-content"', response.data)
                 self.assertIn(b'aria-label="Pol\xc3\xadticas de dangoko"', response.data)
-                self.assertIn(b'css/style.css?v=42', response.data)
+                self.assertIn(b'css/style.css?v=43', response.data)
                 self.assertIn(b"+52 55 2972 3373", response.data)
 
         cookies = self.client.get("/cookies")
@@ -273,15 +279,14 @@ class ShowroomTests(unittest.TestCase):
         self.assertEqual(repository.list_products(fallback), fallback)
         self.assertEqual(repository.last_source, "local-fallback")
 
-    def test_whatsapp_quote_targets_requested_number(self):
+    def test_checkout_does_not_open_whatsapp_automatically(self):
         response = self.client.get("/js/app.js")
         try:
             self.assertEqual(response.status_code, 200)
-            self.assertIn(b'const WHATSAPP_LOCAL_NUMBER = "5529723373"', response.data)
-            self.assertIn(b'const WHATSAPP_NUMBER = `521${WHATSAPP_LOCAL_NUMBER}`', response.data)
-            self.assertIn(b'const SHOP_URL = "https://dangokobox.com/"', response.data)
-            self.assertIn(b"https://wa.me/${WHATSAPP_NUMBER}", response.data)
-            self.assertIn(b"buildWhatsAppMessage", response.data)
+            self.assertNotIn(b"window.open(\"\", \"buldakshop-whatsapp\")", response.data)
+            self.assertNotIn(b"https://wa.me/", response.data)
+            self.assertIn(b"/api/auth/register", response.data)
+            self.assertIn(b"/api/auth/login", response.data)
         finally:
             response.close()
 

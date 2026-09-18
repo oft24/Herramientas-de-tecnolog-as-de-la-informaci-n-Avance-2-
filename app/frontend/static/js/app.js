@@ -128,9 +128,6 @@
   }));
   const productById = new Map(products.map((product) => [product.id, product]));
   const initialProductIndex = Math.max(0, products.findIndex((product) => product.id === "811140"));
-  const WHATSAPP_LOCAL_NUMBER = "5529723373";
-  const WHATSAPP_NUMBER = `521${WHATSAPP_LOCAL_NUMBER}`;
-  const SHOP_URL = "https://dangokobox.com/";
 
   const drinkProducts = (payload.refrescos || []).map((product, index) => ({
     number: String(index + 1).padStart(2, "0"),
@@ -192,6 +189,17 @@
     pairingTitles: [...document.querySelectorAll("[data-pairing-title]")],
     pairingTexts: [...document.querySelectorAll("[data-pairing-text]")],
     language: document.querySelector("[data-language]"),
+    authDialog: document.querySelector("[data-auth-dialog]"),
+    authForm: document.querySelector("[data-auth-form]"),
+    authNameField: document.querySelector("[data-auth-name-field]"),
+    authTitle: document.querySelector("[data-auth-title]"),
+    authCopy: document.querySelector("[data-auth-copy]"),
+    authSubmit: document.querySelector("[data-auth-submit]"),
+    authError: document.querySelector("[data-auth-error]"),
+    authLabel: document.querySelector("[data-auth-label]"),
+    authSession: document.querySelector("[data-auth-session]"),
+    authSessionCopy: document.querySelector("[data-auth-session-copy]"),
+    authLogout: document.querySelector("[data-auth-logout]"),
     cartTrigger: document.querySelector("[data-cart-trigger]"),
     cartCount: document.querySelector("[data-cart-count]"),
     cartTitleCount: document.querySelector("[data-cart-title-count]"),
@@ -215,7 +223,6 @@
     checkoutError: document.querySelector("[data-checkout-error]"),
     checkoutSubmitLabel: document.querySelector("[data-checkout-submit-label]"),
     checkoutSuccessCopy: document.querySelector("[data-checkout-success-copy]"),
-    checkoutWhatsApp: document.querySelector("[data-whatsapp-quote]"),
     legalDialog: document.querySelector("[data-legal-dialog]"),
     toast: document.querySelector("[data-toast]"),
     nav: document.querySelector("[data-nav]"),
@@ -266,6 +273,8 @@
     currentView: "shop",
     lastCartFocus: null,
     lastOrder: null,
+    currentUser: null,
+    authMode: "login",
   };
 
   function clamp(value, min, max) {
@@ -1228,11 +1237,99 @@
     closeCart({ restoreFocus: false });
     dom.checkoutFormView.hidden = false;
     dom.checkoutSuccess.hidden = true;
-    dom.checkoutWhatsApp.hidden = true;
-    dom.checkoutWhatsApp.removeAttribute("href");
     dom.checkoutError.textContent = "";
+    const nameInput = dom.checkoutForm.elements.namedItem("name");
+    if (nameInput && state.currentUser?.name) nameInput.value = state.currentUser.name;
     if (!dom.checkoutDialog.open) dom.checkoutDialog.showModal();
     document.body.classList.add("is-locked");
+  }
+
+  function renderAuthState(user) {
+    state.currentUser = user || null;
+    const signedIn = Boolean(state.currentUser);
+    dom.authLabel.textContent = signedIn ? `Hola, ${state.currentUser.name}` : "Entrar / Registrarse";
+    dom.authForm.hidden = signedIn;
+    dom.authSession.hidden = !signedIn;
+    if (signedIn) {
+      dom.authSessionCopy.textContent = `${state.currentUser.email} · tus pedidos se guardarán en RDS.`;
+    }
+  }
+
+  function setAuthMode(mode) {
+    state.authMode = mode === "register" ? "register" : "login";
+    const registering = state.authMode === "register";
+    document.querySelectorAll("[data-auth-mode]").forEach((tab) => {
+      const active = tab.dataset.authMode === state.authMode;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", String(active));
+    });
+    dom.authNameField.hidden = !registering;
+    dom.authNameField.querySelector("input").required = registering;
+    dom.authTitle.textContent = registering ? "Crea tu cuenta." : "Inicia sesión.";
+    dom.authCopy.textContent = registering
+      ? "Regístrate para asociar tus pedidos a tu usuario en la base de datos."
+      : "Accede a tu cuenta y consulta tus pedidos guardados.";
+    dom.authSubmit.textContent = registering ? "Registrarme" : "Entrar";
+    dom.authError.textContent = "";
+  }
+
+  function openAuth() {
+    closeCart({ restoreFocus: false });
+    if (dom.searchDialog.open) dom.searchDialog.close();
+    if (!dom.authDialog.open) dom.authDialog.showModal();
+    document.body.classList.add("is-locked");
+    if (!state.currentUser) setAuthMode(state.authMode);
+  }
+
+  function closeAuth() {
+    if (dom.authDialog.open) dom.authDialog.close();
+    if (!dom.checkoutDialog.open && !dom.searchDialog.open) document.body.classList.remove("is-locked");
+  }
+
+  async function loadCurrentUser() {
+    try {
+      const response = await fetch("/api/auth/me", { headers: { Accept: "application/json" } });
+      const payload = await response.json();
+      renderAuthState(payload.authenticated ? payload.user : null);
+    } catch {
+      renderAuthState(null);
+    }
+  }
+
+  async function submitAuth(event) {
+    event.preventDefault();
+    const submitButton = dom.authForm.querySelector('button[type="submit"]');
+    const formData = new FormData(dom.authForm);
+    const registering = state.authMode === "register";
+    dom.authError.textContent = "";
+    submitButton.disabled = true;
+    try {
+      const response = await fetch(registering ? "/api/auth/register" : "/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          ...(registering ? { name: formData.get("name") } : {}),
+          email: formData.get("email"),
+          password: formData.get("password"),
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "No se pudo completar la operación.");
+      renderAuthState(payload.user);
+      dom.authForm.reset();
+      showToast(registering ? "Cuenta creada en la base de datos." : "Sesión iniciada.");
+    } catch (error) {
+      dom.authError.textContent = error.message;
+    } finally {
+      submitButton.disabled = false;
+    }
+  }
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST", headers: { Accept: "application/json" } });
+    renderAuthState(null);
+    setAuthMode("login");
+    showToast("Sesión cerrada.");
   }
 
   function openLegal() {
@@ -1269,36 +1366,10 @@
     if (!dom.legalDialog.open && !dom.searchDialog.open) document.body.classList.remove("is-locked");
   }
 
-  function buildWhatsAppMessage(orderId, customerName, cartSnapshot) {
-    const itemLines = cartSnapshot.map((item) => {
-      const product = localizedProduct(productById.get(item.id));
-      const lineTotal = Number(product.price) * item.quantity;
-      return `• ${item.quantity} × ${product.name} — ${product.price_label} ${t("wholesale.perCaseShort")} = ${formatMoney(lineTotal)}`;
-    });
-    const subtotal = cartSnapshot.reduce((total, item) => {
-      const product = productById.get(item.id);
-      return total + Number(product.price) * item.quantity;
-    }, 0);
-    return [
-      t("checkout.whatsappGreeting"),
-      "",
-      t("checkout.whatsappOrder", { id: orderId }),
-      t("checkout.whatsappCustomer", { name: customerName }),
-      "",
-      ...itemLines,
-      "",
-      t("checkout.whatsappSubtotal", { total: formatMoney(subtotal) }),
-      t("checkout.whatsappShipping"),
-      t("checkout.whatsappSource", { url: SHOP_URL })
-    ].join("\n");
-  }
-
   async function submitCheckout(event) {
     event.preventDefault();
     const submitButton = dom.checkoutForm.querySelector('button[type="submit"]');
     const formData = new FormData(dom.checkoutForm);
-    const cartSnapshot = state.cart.map((item) => ({ ...item }));
-    const quoteWindow = window.open("", "buldakshop-whatsapp");
     dom.checkoutError.textContent = "";
     submitButton.disabled = true;
     dom.checkoutSubmitLabel.textContent = t("checkout.submitting");
@@ -1310,6 +1381,7 @@
         body: JSON.stringify({
           customer: {
             name: formData.get("name"),
+            email: state.currentUser?.email || "",
             privacy_consent: formData.get("privacy_consent") === "on"
           },
           cart: state.cart,
@@ -1318,23 +1390,17 @@
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || t("checkout.error"));
 
-      const whatsappMessage = buildWhatsAppMessage(payload.order_id, String(formData.get("name") || ""), cartSnapshot);
-      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
-      state.lastOrder = { id: payload.order_id, total: formatMoney(payload.total), whatsappUrl };
+      state.lastOrder = { id: payload.order_id, total: formatMoney(payload.total) };
       dom.checkoutSuccessCopy.textContent = t("checkout.successCopy", {
         id: state.lastOrder.id,
         total: state.lastOrder.total
       });
-      dom.checkoutWhatsApp.href = whatsappUrl;
-      dom.checkoutWhatsApp.hidden = false;
       dom.checkoutFormView.hidden = true;
       dom.checkoutSuccess.hidden = false;
       state.cart = [];
       saveCart();
       renderCart();
-      if (quoteWindow) quoteWindow.location.replace(whatsappUrl);
     } catch (error) {
-      quoteWindow?.close();
       dom.checkoutError.textContent = error.message;
     } finally {
       submitButton.disabled = false;
@@ -1528,6 +1594,18 @@
 
   dom.language.addEventListener("change", () => applyLanguage(dom.language.value));
 
+  document.querySelectorAll("[data-open-auth]").forEach((button) => button.addEventListener("click", openAuth));
+  document.querySelector("[data-close-auth]").addEventListener("click", closeAuth);
+  document.querySelectorAll("[data-auth-mode]").forEach((tab) => tab.addEventListener("click", () => setAuthMode(tab.dataset.authMode)));
+  dom.authDialog.addEventListener("click", (event) => {
+    if (event.target === dom.authDialog) closeAuth();
+  });
+  dom.authDialog.addEventListener("close", () => {
+    if (!dom.checkoutDialog.open && !dom.searchDialog.open) document.body.classList.remove("is-locked");
+  });
+  dom.authForm.addEventListener("submit", submitAuth);
+  dom.authLogout.addEventListener("click", logout);
+
   document.querySelectorAll("[data-open-legal]").forEach((button) => button.addEventListener("click", openLegal));
   document.querySelector("[data-close-legal]").addEventListener("click", closeLegal);
   dom.legalDialog.addEventListener("click", (event) => {
@@ -1568,7 +1646,7 @@
   });
 
   window.addEventListener("keydown", (event) => {
-    const dialogOpen = dom.searchDialog.open || dom.checkoutDialog.open || dom.legalDialog.open;
+    const dialogOpen = dom.searchDialog.open || dom.checkoutDialog.open || dom.legalDialog.open || dom.authDialog.open;
     if (event.key === "Escape" && dom.cartDrawer.classList.contains("is-open")) closeCart();
     if (dialogOpen || ["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) return;
     if (event.key === "ArrowRight") {
@@ -2054,6 +2132,7 @@
   });
 
   applyLanguage(state.language, { persist: false, initial: true });
+  loadCurrentUser();
   updateHeader();
   queueCarouselDraw();
 })();
