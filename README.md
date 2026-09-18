@@ -82,7 +82,7 @@ El checkout crea el pedido en RDS antes de notificar. Si falla la creación en R
 ## Validación de entrega
 
 ```bash
-python -m pytest -q
+PYTHONPATH=app python -m pytest -q
 python pipeline/run_pipeline.py --demo-red
 python pipeline/run_pipeline.py
 python pipeline/generate_sbom.py

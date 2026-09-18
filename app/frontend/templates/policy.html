@@ -44,7 +44,7 @@
           {% if business.legal_name %}<div><dt>Nombre o razón social</dt><dd>{{ business.legal_name }}</dd></div>{% endif %}
           {% if business.rfc %}<div><dt>RFC</dt><dd>{{ business.rfc }}</dd></div>{% endif %}
           {% if business.address %}<div><dt>Domicilio</dt><dd>{{ business.address }}</dd></div>{% endif %}
-          <div><dt>Teléfono y WhatsApp</dt><dd><a href="{{ business.whatsapp_url }}" rel="noopener noreferrer">{{ business.phone }}</a></dd></div>
+          {% if business.phone %}<div><dt>Teléfono</dt><dd>{{ business.phone }}</dd></div>{% endif %}
           {% if business.email %}<div><dt>Correo</dt><dd><a href="mailto:{{ business.email }}">{{ business.email }}</a></dd></div>{% endif %}
         </dl>
       </section>
