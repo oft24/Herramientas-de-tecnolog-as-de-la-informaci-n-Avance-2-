@@ -43,9 +43,9 @@ def secret_scan(root: Path) -> list[str]:
             continue
         if any(part in {".git", ".venv", "venv", "node_modules", "__pycache__"} for part in path.parts):
             continue
-        if path.name == ".env":
+        if path.name == ".env" or path.name == "terraform.tfvars":
             # Local development configuration is intentionally ignored by Git.
-            # A tracked .env is still caught by the repository hygiene check.
+            # A tracked .env or terraform.tfvars is still caught by the repository hygiene check.
             if path.is_relative_to(ROOT):
                 tracked = subprocess.run(
                     ["git", "ls-files", "--error-unmatch", str(path.relative_to(ROOT))],
